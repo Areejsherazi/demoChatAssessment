@@ -3,8 +3,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '../../lib/useAuth'
 import api from '../../lib/api'
 import MessageBubble from '../../components/chat/MessageBubble'
-import { decryptMessageForDisplay, ensureChatKeyAvailable, encryptMessageForSend } from '../../lib/crypto'
 import Button from '../../components/ui/Button'
+import { decryptMessageForDisplay, ensureChatKeyAvailable, encryptMessageForSend } from '../../lib/crypto'
 
 export default function ChatDetailPage() {
   const router = useRouter()
@@ -17,26 +17,24 @@ export default function ChatDetailPage() {
   const listRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-  if (!id || id === "new") return
+    if (!id || id === 'new') return
     fetchChat()
     fetchMessages()
-    // naive polling for demo
-    const iv = setInterval(fetchMessages, 3000)
-    return () => clearInterval(iv)
+    const interval = setInterval(fetchMessages, 3000)
+    return () => clearInterval(interval)
   }, [id])
 
   async function fetchChat() {
+    if (!id) return
     try {
       const res = await api.get(`/chats/${id}`)
-      setChat(await res.json())
-      // ensure chat key exists locally (derive/wrap)
+      const chatData = await res.json()
+      setChat(chatData)
       await ensureChatKeyAvailable(String(id))
     } catch (e) {
       console.error(e)
     }
   }
-
-  
 
   async function fetchMessages() {
     if (!id) return
@@ -60,40 +58,36 @@ export default function ChatDetailPage() {
     }
   }
 
-   async function ensureRealChat() {
-  if (id && id !== "new") return id
-  // Create a new chat on backend
-  const res = await api.post('/chats', { body: { title: "Untitled Chat" } })
-  const newChat = await res.json()
-  const newId = newChat._id
-  // redirect user to /chats/<newId>
-  router.replace(`/chats/${newId}`)
-  return newId
-}
-
-async function send() {
-  if (!input.trim()) return
-  setLoading(true)
-  try {
-    const chatId = await ensureRealChat()
-    const payload = await encryptMessageForSend(chatId, input.trim())
-    await api.post(`/chats/${chatId}/messages`, {
-      body: { encryptedPayload: payload }
-    })
-    setInput('')
-    await fetchMessages()
-  } catch (e) {
-    console.error(e)
-    alert('Send failed')
-  } finally {
-    setLoading(false)
+  async function send() {
+    if (!input.trim()) return
+    setLoading(true)
+    try {
+      const chatId = id === 'new' ? await createChat() : id
+      const payload = await encryptMessageForSend(chatId as string, input.trim())
+      await api.post(`/chats/${chatId}/messages`, { body: { encryptedPayload: payload } })
+      setInput('')
+      await fetchMessages()
+    } catch (e) {
+      console.error(e)
+      alert('Send failed')
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
+  async function createChat() {
+    const res = await api.post('/chats', { body: { otherUserId: '' } })
+    const newChat = await res.json()
+    router.replace(`/chats/${newChat._id}`)
+    return newChat._id
+  }
+
+  // Find other user to display name
+  const otherMember = chat?.members?.find((m: any) => m._id !== user?._id)
 
   return (
     <div className="chat-page">
-      <h3>{chat?.title || 'Chat'}</h3>
+      <h3>{otherMember?.displayName || 'Chat'}</h3>
       <div className="messages" ref={listRef}>
         {messages.map(m => (
           <MessageBubble key={m._id} message={m} currentUserId={user?.id} />
@@ -101,8 +95,14 @@ async function send() {
       </div>
 
       <div className="composer">
-        <input placeholder="Type a message..." value={input} onChange={e => setInput(e.target.value)} />
-        <Button onClick={send} disabled={loading}>{loading ? 'Sending...' : 'Send'}</Button>
+        <input
+          placeholder="Type a message..."
+          value={input}
+          onChange={e => setInput(e.target.value)}
+        />
+        <Button onClick={send} disabled={loading}>
+          {loading ? 'Sending...' : 'Send'}
+        </Button>
       </div>
     </div>
   )
