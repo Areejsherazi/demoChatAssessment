@@ -18,7 +18,6 @@ export default function HomePage() {
 
   async function startChatWith(otherUserId: string) {
     try {
-      // Chat create endpoint call karna
       const res = await api.post("/chats", { body: { memberId: otherUserId } })
       const chat = await res.json()
       router.push(`/chats/${chat._id}`)

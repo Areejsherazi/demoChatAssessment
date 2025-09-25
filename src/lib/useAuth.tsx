@@ -29,8 +29,7 @@ function useProvideAuth() {
     localStorage.setItem('sc_user', JSON.stringify(data.user))
     setUser(data.user)
 
-    // derive master key from password and store raw key in sessionStorage for demo use (so chat keys can be unwrapped)
-    // In production NEVER store raw key long term.
+
     const { key } = await deriveMasterKey(password, loadOrCreateSalt())
     // export raw master key to session
     const rawMaster = await crypto.subtle.exportKey('raw', key)

@@ -13,7 +13,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   await dbConnect()
 
- // src/pages/api/chats/index.ts
 if (req.method === 'POST') {
   const { otherUserId } = req.body
   if (!otherUserId) return res.status(400).json({ error: 'otherUserId required' })
@@ -33,19 +32,15 @@ if (req.method === 'POST') {
     chat = await Chat.create({ members: [payload.userId, otherUserId] })
   }
 
-  // Populate members to get displayName
   chat = await chat.populate('members', 'displayName')
 
   return res.status(201).json(chat)
 }
 
 
-  // GET all chats for current user
-// src/pages/api/chats/index.ts
-
 if (req.method === 'GET') {
   const chats = await Chat.find({ members: payload.userId })
-    .populate('members', 'displayName') // <--- yahi important hai
+    .populate('members', 'displayName')
     .lean()
   return res.status(200).json(chats)
 }

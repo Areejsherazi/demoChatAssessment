@@ -82,7 +82,6 @@ export default function ChatDetailPage() {
     return newChat._id
   }
 
-  // Find other user to display name
   const otherMember = chat?.members?.find((m: any) => m._id !== user?._id)
 
   return (

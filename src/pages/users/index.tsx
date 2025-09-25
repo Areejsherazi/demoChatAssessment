@@ -38,7 +38,7 @@ export default function UsersPage() {
       {loading ? <p>Loading...</p> : (
         <ul>
           {users.map(u => (
-            u._id !== user._id && ( // current user ko list se hide
+            u._id !== user._id && ( 
               <li key={u._id}>
                 <button onClick={() => startChat(u._id)}>
                   {u.displayName}

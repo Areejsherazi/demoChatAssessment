@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/router'   // 👈 add this
+import { useRouter } from 'next/router'  
 import { useAuth } from '../lib/useAuth'
 import Button from '../components/ui/Button'
 
